@@ -8,13 +8,13 @@ from nav_msgs.msg import OccupancyGrid
 from std_msgs.msg import String
 import time
 
-# Python script for ball detection is supposed to be here
-
+# Node that publishes ball detection message to ROS 
 class BallDetector(Node):
     def __init__(self,msgdata):
         super().__init__('balldetector')
         self.publisher_ = self.create_publisher(String, 'balldetector', 10)
-        timer_period = 0.5  # seconds
+        # Publishing message at 5 Hz
+        timer_period = 0.2  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.msgdata = msgdata
 
@@ -24,12 +24,16 @@ class BallDetector(Node):
         self.publisher_.publish(msg)
         self.get_logger().info('Publishing: "%s"' % msg.data)
 
+
 def main(args=None):
     rclpy.init(args=args)
     ballDetector = BallDetector("Stop moving")
     rclpy.spin_once(ballDetector)
     time.sleep(2)
-    ballDetector.string1 = "Continue moving"
+    ballDetector.msgdata = "Continue moving"
     rclpy.spin_once(ballDetector)
     ballDetector.destroy_node()
     rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()

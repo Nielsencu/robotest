@@ -51,7 +51,6 @@ class Robot(Node):
         # create publisher for moving TurtleBot
         self.publisher_ = self.create_publisher(Twist,'cmd_vel',10)
         # self.get_logger().info('Created publisher')
-        
         # create subscription to track orientation
         self.odom_subscription = self.create_subscription(
             Odometry,
@@ -64,8 +63,8 @@ class Robot(Node):
         self.roll = 0
         self.pitch = 0
         self.yaw = 0
-
-            # create subscription to track occupancy
+        
+        # create subscription to track occupancy
         self.occ_subscription = self.create_subscription(
             OccupancyGrid,
             'map',
@@ -81,11 +80,11 @@ class Robot(Node):
             self.scan_callback,
             qos_profile_sensor_data)
         self.scan_subscription  # prevent unused variable warning
-
+        
         self.string_subscription = self.create_subscription(
             String,
-            'balldetect',
-            self.string_callback,
+            'balldetector',
+            self.detection_callback,
             10)
 
         self.laser_range = np.array([])
@@ -93,37 +92,39 @@ class Robot(Node):
         self.tfBuffer = tf2_ros.Buffer()
         self.tfListener = tf2_ros.TransformListener(self.tfBuffer, self)
 
-        self.balldetect = False
-        self.balldirection = 'forward'
+        self.ballDetect = False
+        self.ballDirection = 'forward'
 
-    def string_callback(self,msg):
+    def detection_callback(self,msg):
         self.get_logger().info('In shooter callback %s' % msg.data)
-        if msg.data == 'Stop moving':
-            self.balldetect = True
-            self.get_logger().info('Stopping because ball is detected')
-        elif msg.data == 'Continue moving':
-            self.balldetect = False
+        if msg.data == 'st':
+            self.ballDetect = True
+            self.get_logger().info('Stopping navigation ...')
+        elif msg.data == 're':
+            self.ballDetect = False
             self.get_logger().info('Resuming navigation ...')
-        elif msg.data == 'left':
-            self.balldirection = 'left'
+        elif msg.data == 'l':
+            self.ballDirection = 'l'
             self.get_logger().info('going left')
-        elif msg.data == 'right':
-            self.balldirection = 'right'
+        elif msg.data == 'r':
+            self.ballDirection = 'r'
             self.get_logger().info('going right')
-        elif msg.data == 'forward':
-            self.balldirection = 'forward'
+        elif msg.data == 'f':
+            self.ballDirection = 'f'
             self.get_logger().info('going forward')
-        elif msg.data == 'stop':
-            self.balldirection = 'stop'
+        elif msg.data == 's':
+            self.ballDirection = 's'
             self.get_logger().info('stopping')
+        else:
+            self.get_logger().info('ball not detected')
 
     def odom_callback(self, msg):
-        #self.get_logger().info('In odom_callback')
+        self.get_logger().info('In odom_callback')
         orientation_quat =  msg.pose.pose.orientation
         self.roll, self.pitch, self.yaw = euler_from_quaternion(orientation_quat.x, orientation_quat.y, orientation_quat.z, orientation_quat.w)
     
     def scan_callback(self, msg):
-        # self.get_logger().info('In scan_callback')
+        self.get_logger().info('In scan_callback')
         # create numpy array
         self.laser_range = np.array(msg.ranges)
         # print to file
@@ -212,21 +213,25 @@ class Robot(Node):
             
             while rclpy.ok():
                 # Ball is detected, stop navigation, and send twist commands back to RPi and RPi to STM32
-                if self.balldetect:
+                if self.ballDetect:
+                    # Stop for 1 second
+                    self.stop()
+                    time.sleep(1)
+                    # Now move to ball
                     twist = Twist()
-                    if self.shooterDirection == 'f':
+                    if self.ballDirection == 'f':
                         self.get_logger().info(" forward in mover")
                         twist.linear.x = -0.1
                         twist.angular.z = 0.0
-                    elif self.shooterDirection == 'l':
+                    elif self.ballDirection == 'l':
                         self.get_logger().info("left in mover")
                         twist.linear.x = 0.0
                         twist.angular.z = 0.1
-                    elif self.shooterDirection == 'r':   
+                    elif self.ballDirection == 'r':   
                         self.get_logger().info(" right in mover")
                         twist.linear.x = 0.0
                         twist.angular.z = -0.1
-                    elif self.shooterDirection == 's':
+                    elif self.ballDirection == 's':
                         self.get_logger().info(" stopping in mover")
                         twist.linear.x = 0.0
                         twist.angular.z = 0.0
@@ -234,6 +239,7 @@ class Robot(Node):
                     rclpy.spin_once(self)
                 else:
                     twist = Twist()
+                    # To be done, should use LiDAR to navigate around
 
         except Exception as e:
             print(e, "Exception")
