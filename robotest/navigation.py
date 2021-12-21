@@ -5,19 +5,17 @@ from geometry_msgs.msg import Twist, Point
 from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import OccupancyGrid
+from std_msgs.msg import String
+import tf2_ros
+from tf2_ros import LookupException, ConnectivityException, ExtrapolationException
+from .rviz import RvizInterface
 import numpy as np
 import math
 import cmath
 import time
-import tf2_ros
-from tf2_ros import LookupException, ConnectivityException, ExtrapolationException
 from math import atan2
 import scipy.stats
-from .rviz import RvizInterface
-from PIL import Image 
 import matplotlib.pyplot as plt
-from std_msgs.msg import String
-import threading
 
 scanfile = 'lidar.txt'
 mapfile = 'map.txt'
