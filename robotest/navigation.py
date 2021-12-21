@@ -211,7 +211,7 @@ class Robot(Node):
             rclpy.spin_once(self)
             
             while rclpy.ok():
-                # Ball is detected, stop navigation, and send commands back to RPi and RPi to STM32
+                # Ball is detected, stop navigation, and send twist commands back to RPi and RPi to STM32
                 if self.balldetect:
                     twist = Twist()
                     if self.shooterDirection == 'f':
