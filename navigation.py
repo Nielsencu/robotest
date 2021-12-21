@@ -14,8 +14,8 @@ import math
 import cmath
 import time
 from math import atan2
-import scipy.stats
 import matplotlib.pyplot as plt
+import scipy.stats
 
 scanfile = 'lidar.txt'
 mapfile = 'map.txt'
